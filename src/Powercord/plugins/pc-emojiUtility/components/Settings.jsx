@@ -34,6 +34,14 @@ module.exports = class EmojiUtilitySettings extends React.Component {
           Use embeds
         </SwitchItem>
 
+        <SwitchItem
+          note='Whether to display the Send Link button when right-clicking an emote.'
+          value={settings.displaySendLink}
+          onChange={() => this.set('displaySendLink')}
+        >
+          Enable Send Link
+        </SwitchItem>
+
         {!settings.useEmbeds && (
           <SwitchItem
             note='Whether the message for the findemote command should contain the link to the guild the emote is in.'

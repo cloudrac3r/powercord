@@ -21,13 +21,14 @@ const {
   },
   messages: {
     createBotMessage,
-    receiveMessage
+    receiveMessage,
+    sendMessage
   }
 } = require('powercord/webpack');
 
 const { CDN_HOST } = window.GLOBAL_ENV;
 
-const { ContextMenu, ContextMenu: { Submenu } } = require('powercord/components');
+const { ContextMenu, ContextMenu: { Submenu, Button } } = require('powercord/components');
 const { getOwnerInstance } = require('powercord/util');
 const { inject, injectInFluxContainer, uninject } = require('powercord/injector');
 const { open: openModal } = require('powercord/modal');
@@ -447,6 +448,19 @@ module.exports = class EmojiUtility extends Plugin {
             emoji.fake = false;
           } else {
             emoji = _this.createFakeEmoji(matcher[1], target.alt.substring(1, target.alt.length - 1), target.src);
+          }
+
+          const displaySendLink = _this.settings.get("displaySendLink", true);
+          if (displaySendLink) {
+            res.props.children.splice(4, 0,
+              React.createElement(Button, {
+                name: 'Send Link',
+                seperate: false,
+                onClick: () => {
+                  sendMessage(getChannelId(), {content: `https://cdn.discordapp.com/emojis/${emoji.id}.png?v=1`});
+                }
+              })
+            );
           }
 
           res.props.children.push(
