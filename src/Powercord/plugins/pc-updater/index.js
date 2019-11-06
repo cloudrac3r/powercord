@@ -243,7 +243,11 @@ module.exports = class Updater extends Plugin {
     const revision = await exec(`git rev-parse ${branch}`, this.cwd)
       .then(r => r.stdout.toString().trim());
 
-    const upstream = await exec('git remote get-url origin', this.cwd)
+    const upstream = await exec('git rev-parse --abbrev-ref --symbolic-full-name @{u}', this.cwd)
+      .then(r => {
+        const user = r.stdout.toString().split('/')[0];
+        return exec(`git remote get-url ${user}`, this.cwd)
+      })
       .then(r => r.stdout.toString().match(/github\.com[:/]([\w-_]+\/[\w-_]+)/)[1]);
 
     return {
