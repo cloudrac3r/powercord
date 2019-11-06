@@ -1,6 +1,6 @@
 const { React, getModule } = require('powercord/webpack');
 const { Button, FormNotice, FormTitle, Tooltip } = require('powercord/components');
-const { SwitchItem, TextInput, Category, ButtonItem } = require('powercord/components/settings');
+const { SwitchItem, TextInput, Category, FormItem, ButtonItem } = require('powercord/components/settings');
 const { open: openModal, close: closeModal } = require('powercord/modal');
 const { Confirm } = require('powercord/components/modal');
 
@@ -190,16 +190,9 @@ module.exports = class UpdaterSettings extends React.Component {
         >
           Open Change Logs
         </ButtonItem>
-        <ButtonItem
-          note='You can choose between the stable branch, or the development branch. Stable branch will only get major updates, security and critical updates. If unsure, stay on stable.'
-          button={powercord.gitInfos.branch === 'v2' ? 'Switch to development branch' : 'Switch to stable'}
-          onClick={() => this.askChangeChannel(
-            powercord.gitInfos.branch === 'v2' ? 'development' : 'stable',
-            () => this.plugin.changeBranch(powercord.gitInfos.branch === 'v2' ? 'v2-dev' : 'v2')
-          )}
-        >
-          Change Release Channel
-        </ButtonItem>
+        <FormItem>
+          You are on the branch {powercord.gitInfos.branch}. Branch switching is disabled.
+        </FormItem>
       </>}
     </div>;
   }
