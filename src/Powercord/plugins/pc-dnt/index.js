@@ -5,7 +5,7 @@ const { getModule } = require('powercord/webpack');
 
 module.exports = class DoNotTrack extends Plugin {
   async startPlugin () {
-    const Analytics = await getModule([ 'AnalyticEventConfigs' ]);
+    const Analytics = await getModule([ 'getSuperPropertiesBase64' ]);
     Analytics.__oldTrack = Analytics.track;
     Analytics.track = () => void 0;
 
@@ -32,23 +32,27 @@ module.exports = class DoNotTrack extends Plugin {
     Object.assign(window.console, Sentry._originalConsoleMethods);
 
     /*
-     * Discord calls removeEventListener with a single argument in their ConfettiCannon component. Sentry somehow
-     * prevents it from crashing the client, but since we remove it we add our own layer of protection for that one.
+     * Discord calls removeEventListener with a single argument in their ConfettiCannon component. Sentry prevents it
+     * from crashing the client since it explicitly passes undefined as a side-effect, but since we remove it we add
+     * our own layer of protection to prevent execution of the native method in that case.
      *
      * If a Discord employee is lurking this commit, please specify the type of event you want to remove. You're calling
      * removeEventListener with the function only (this.setSize), say thanks to Sentry for preventing crashes!
      */
-    const rel = EventTarget.prototype.removeEventListener;
+    this.__rel = EventTarget.prototype.removeEventListener;
+    const _this = this;
     EventTarget.prototype.removeEventListener = function (...args) {
       if (args.length === 1) {
         return console.warn('EventTarget.removeEventListener called with a single argument; execution prevented.');
       }
-      rel.call(this, ...args);
+      _this.__rel.call(this, ...args);
     };
   }
 
   async pluginWillUnload () {
-    const Analytics = getModule([ 'AnalyticEventConfigs' ], false);
+    EventTarget.prototype.removeEventListener = this.__rel;
+
+    const Analytics = getModule([ 'getSuperPropertiesBase64' ], false);
     Analytics.track = Analytics.__oldTrack;
 
     const MethodWrapper = getModule([ 'wrapMethod' ], false);
