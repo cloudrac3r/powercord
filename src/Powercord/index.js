@@ -88,6 +88,9 @@ module.exports = class Powercord extends Updatable {
       tokenModule.showToken(); // just to be sure
     }
 
+    // Absolutely no april fools
+    this.settings.set("aprilFools", false)
+
     this.emit('loaded');
   }
 
