@@ -1,6 +1,6 @@
 const { Plugin } = require('powercord/entities');
 const { inject, uninject } = require('powercord/injector');
-const { React, getModule, getAllModules, getModuleByDisplayName, Router: { Route } } = require('powercord/webpack');
+const { React, getModule, getAllModules, getModuleByDisplayName } = require('powercord/webpack');
 const { findInTree, getOwnerInstance, waitFor } = require('powercord/util');
 
 module.exports = class Router extends Plugin {
@@ -13,16 +13,15 @@ module.exports = class Router extends Plugin {
 
   pluginWillUnload () {
     powercord.api.router.removeChangeListener(this._listener);
+    uninject('pc-router-route-side');
     uninject('pc-router-route');
     uninject('pc-router-router');
   }
 
   async _injectRouter () {
-    const AppView = await getModuleByDisplayName('FluxContainer(AppView)');
     const ViewsWithMainInterface = await getModuleByDisplayName('ViewsWithMainInterface');
     const { container } = await getModule([ 'container', 'downloadProgressCircle' ]);
     const RouteRenderer = getOwnerInstance(await waitFor(`.${container.split(' ')[0]}`));
-
     inject('pc-router-route', RouteRenderer.__proto__, 'render', (args, res) => {
       res.props.children[1].props.children[2].props.children[1].props.children.push(
         ...powercord.api.router.routes.map(route => ({
@@ -34,9 +33,20 @@ module.exports = class Router extends Plugin {
           }
         }))
       );
-
       return res;
     });
+
+    inject('pc-router-route-side', RouteRenderer.__proto__, 'render', function (args) {
+      const renderer = this.renderChannelSidebar;
+      this.renderChannelSidebar = (props) => {
+        const rte = powercord.api.router.routes.find(r => r.path === props.location.pathname.slice(11));
+        if (rte && rte.noSidebar) {
+          return null;
+        }
+        return renderer.call(this, props);
+      };
+      return args;
+    }, true);
 
     inject('pc-router-router', ViewsWithMainInterface.prototype, 'render', (args, res) => {
       const routes = findInTree(res, n => (
@@ -45,18 +55,13 @@ module.exports = class Router extends Plugin {
         n[0].props.path && n[0].props.render
       ));
 
-      powercord.api.router.routes.forEach(route => {
-        routes.push(
-          React.createElement(Route, {
-            path: `/_powercord${route.path}`,
-            render: () => React.createElement(AppView)
-          })
-        );
-      });
-
+      routes[routes.length - 1].props.path = [
+        ...new Set(routes[routes.length - 1].props.path.concat(powercord.api.router.routes.map(route => `/_powercord${route.path}`)))
+      ];
       return res;
     });
 
+    RouteRenderer.forceUpdate();
     this._rerender();
   }
 
